@@ -53,13 +53,13 @@ func edgesRotation(face *Face, direction int, prime bool) {
 	var pos_4 [3]int
 	if direction == U {
 		pos_1 = [3]int{6, 7, 8}
-		pos_2 = [3]int{0, 1, 2}
-		pos_3 = [3]int{0, 1, 2}
-		pos_4 = [3]int{0, 1, 2}
+		pos_2 = [3]int{2, 1, 0}
+		pos_3 = [3]int{2, 1, 0}
+		pos_4 = [3]int{2, 1, 0}
 	} else if direction == D {
 		pos_1 = [3]int{6, 7, 8}
 		pos_2 = [3]int{6, 7, 8}
-		pos_3 = [3]int{0, 1, 2}
+		pos_3 = [3]int{2, 1, 0}
 		pos_4 = [3]int{6, 7, 8}
 	} else if direction == L {
 		pos_1 = [3]int{0, 3, 6}
@@ -73,12 +73,12 @@ func edgesRotation(face *Face, direction int, prime bool) {
 		pos_4 = [3]int{2, 5, 8}
 	} else if direction == F {
 		pos_1 = [3]int{6, 7, 8}
-		pos_2 = [3]int{2, 5, 8}
-		pos_3 = [3]int{0, 1, 2}
+		pos_2 = [3]int{8, 5, 2}
+		pos_3 = [3]int{2, 1, 0}
 		pos_4 = [3]int{0, 3, 6}
 	} else if direction == B {
-		pos_1 = [3]int{6, 7, 8}
-		pos_2 = [3]int{0, 3, 6}
+		pos_1 = [3]int{8, 7, 6}
+		pos_2 = [3]int{6, 3, 0}
 		pos_3 = [3]int{0, 1, 2}
 		pos_4 = [3]int{2, 5, 8}
 	}
