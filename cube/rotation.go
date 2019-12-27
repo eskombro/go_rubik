@@ -5,17 +5,27 @@ import (
 	"strings"
 )
 
-func RotateFace(cube *Rubik, instruction string) {
+func RotateFace(cube *Rubik, instruction string, verbose bool) {
 	instructions := "UDLRFB"
 	direction := strings.Index(instructions, string(instruction[0]))
 	prime := false
+	double := false
 	if len(instruction) > 1 {
 		prime = string(instruction[1]) == "'"
+		double = string(instruction[1]) == "2"
 	}
-	fmt.Println("Rotating cube in direction: ", instruction)
+	if verbose {
+		fmt.Println("Rotating cube in direction: ", instruction)
+	}
 	face := &cube.Faces[direction]
 	simpleFaceRotation(face, prime)
+	if double {
+		simpleFaceRotation(face, prime)
+	}
 	edgesRotation(face, direction, prime)
+	if double {
+		edgesRotation(face, direction, prime)
+	}
 }
 
 func simpleFaceRotation(face *Face, prime bool) {

@@ -13,7 +13,7 @@ type Node struct {
 	Parent   *Node
 	Move     int
 	Depth    int
-	Children [12]*Node
+	Children [18]*Node
 }
 
 var maxDepth = 6
@@ -49,7 +49,7 @@ func runTraining(c *cube.Rubik, node *Node) {
 	counter++
 	if node.Children[0] == nil {
 		if counter%100 == 0 {
-			fmt.Println("Trained:", counter, "solutions found.")
+			fmt.Println("Trained:", counter, "combinations tested.")
 			// 	os.Exit(0)
 		}
 
@@ -63,20 +63,27 @@ func runTraining(c *cube.Rubik, node *Node) {
 		}
 	}
 	unapplyMove(c, node.Move)
+	if node.Move == len(move_options)-1 {
+		node.Parent.Children = [18]*Node{}
+	}
 }
 
 func applyMove(c *cube.Rubik, move int) {
 	// fmt.Println("Apply", move)
-	cube.RotateFace(c, move_options[move])
+	cube.RotateFace(c, move_options[move], false)
 }
 
 func GetOppositeMove(move int) int {
 	opposite := 0
-	optionsCount := len(move_options)
-	if move < optionsCount/2 {
-		opposite = move + optionsCount/2
+	optionsCountQuarter := (len(move_options) * 2) / 3
+	if move < optionsCountQuarter {
+		if move < optionsCountQuarter/2 {
+			opposite = move + optionsCountQuarter/2
+		} else {
+			opposite = move - optionsCountQuarter/2
+		}
 	} else {
-		opposite = move - optionsCount/2
+		opposite = move
 	}
 	return opposite
 }
@@ -85,7 +92,7 @@ func unapplyMove(c *cube.Rubik, move int) {
 
 	opposite := GetOppositeMove(move)
 	// fmt.Println("Unapply", move, "->", opposite)
-	cube.RotateFace(c, move_options[opposite])
+	cube.RotateFace(c, move_options[opposite], false)
 }
 
 func GetCubeStateHash(c *cube.Rubik) string {
