@@ -1,6 +1,7 @@
 package solve
 
 import (
+	"crypto/md5"
 	"fmt"
 
 	bolt "go_rubik/src/boltdb"
@@ -10,32 +11,40 @@ import (
 var ResultCube cube.Rubik
 var ResultCubeHash string
 
-func mixCube(c *cube.Rubik) {
-	fmt.Println("Shuffling Cube:")
-	RandomMove(c, true)
-	RandomMove(c, true)
-	RandomMove(c, true)
-	fmt.Println("-----------")
-	fmt.Println("Initial state:")
-	cube.PrintRubik(c)
-	fmt.Println("-----------")
-}
-
-func Solve(c *cube.Rubik) string {
-	mixCube(c)
+func Solve(c *cube.Rubik, useCache bool) string {
 	ResultCube := cube.NewRubik()
 	ResultCubeHash = GetCubeStateHash(ResultCube)
-	solution := SolveAStar(c)
+	solution := SolveAStar(c, useCache)
 	return solution
 }
 
-func CheckStateInCache(c *cube.Rubik) string {
-	hash := ""
+func GetCubeStateHash(c *cube.Rubik) string {
+	cubeStr := ""
+	for _, face := range c.Faces {
+		cubeStr += fmt.Sprint(face.Blocks)
+	}
+	data := []byte(cubeStr)
+	return fmt.Sprintf("%x", md5.Sum(data))
+}
+
+func CheckStateInCacheDB(hash string) string {
 	if bolt.Bolt.Bucket == nil {
 		bolt.CreateDB()
 		bolt.Bolt.Bucket = &bolt.BboltBucket{Name: "list"}
 	}
-	hash = GetCubeStateHash(c)
 	solution := bolt.Get(bolt.Bolt.Bucket, hash)
 	return solution
+}
+
+func addStateToCacheDB(c *cube.Rubik, node *Node) {
+	hash := GetCubeStateHash(c)
+	solution := ""
+	for node.Parent != nil {
+		solution += move_options[GetOppositeMove(node.Move)] + " "
+		node = node.Parent
+	}
+	prev := bolt.Get(bolt.Bolt.Bucket, hash)
+	if prev == "none" || len(prev) > len(solution) {
+		bolt.Put(bolt.Bolt.Bucket, hash, solution)
+	}
 }

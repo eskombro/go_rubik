@@ -15,7 +15,7 @@ func RotateFace(cube *Rubik, instruction string, verbose bool) {
 		double = string(instruction[1]) == "2"
 	}
 	if verbose {
-		fmt.Println("Rotating cube in direction: ", instruction)
+		fmt.Println("   Rotating cube in direction: ", instruction)
 	}
 	face := &cube.Faces[direction]
 	simpleFaceRotation(face, prime)

@@ -8,12 +8,24 @@ import (
 )
 
 func main() {
-	fmt.Println("Rubik's Go!")
-	fmt.Println("-----------")
+	// Parameters
+	useCache := true
+	randomIterations := 8
+	trainingSession := false
 
-	// solve.Train()
-
+	fmt.Println("  .----------------------.")
+	fmt.Println("  |      Rubik's Go!     |")
+	fmt.Println("  '----------------------'")
 	c := cube.NewRubik()
-	solution := solve.Solve(c)
-	fmt.Println("----\nSolution: ", solution)
+	if trainingSession {
+		solve.Train()
+	} else {
+		solve.MixCubeRandom(c, randomIterations)
+		fmt.Println("-----------")
+		fmt.Println("Initial state:")
+		cube.PrintRubik(c)
+		fmt.Println("-----------")
+		solution := solve.Solve(c, useCache)
+		fmt.Println("----\nSolution: ", solution)
+	}
 }

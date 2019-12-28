@@ -21,36 +21,62 @@ type aStarData struct {
 	closedList []*ANode
 }
 
-func SolveAStar(c *cube.Rubik) string {
-	solution := "none"
+func SolveAStar(c *cube.Rubik, usesCache bool) string {
 	fmt.Println("Launching A*")
 	gd := aStarData{[]*ANode{}, []*ANode{}}
-	fmt.Println("Result Hash", ResultCubeHash)
 	n := createNode(c, nil, -1)
 	gd.openList = append(gd.openList, n)
-	running := true
 	rounds := 0
 
-	for running {
+	for {
 		if len(gd.openList) > 0 {
 			rounds++
 			fmt.Printf("\rRounds: %d", rounds)
 			current := gd.openList[0]
 			gd.openList = removeFromList(current, gd.openList)
 			gd.closedList = append(gd.closedList, current)
-			if current.Hash == ResultCubeHash {
-				fmt.Println("\rFOUND SOLUTION")
+			isSolution, solution := checkIsSolution(current, usesCache)
+			if isSolution {
 				fmt.Println("Nodes checked:", rounds)
-				os.Exit(0)
+				return solution
 			}
-			handleNode(move_options, &gd, current)
+			expandNode(move_options, &gd, current)
 		} else {
 			fmt.Println("Open list is empty (shouldn't happen)")
-			fmt.Println("Did", rounds, "rounds")
 			os.Exit(1)
 		}
 	}
-	return solution
+}
+
+func checkIsSolution(current *ANode, usesCache bool) (bool, string) {
+	solutionCache := "none"
+	solution := ""
+	isSolution := false
+	if usesCache {
+		solutionCache = CheckStateInCacheDB(current.Hash)
+		if solutionCache != "none" {
+			isSolution = true
+		} else if current.Hash == ResultCubeHash {
+			isSolution = true
+		}
+	} else {
+		if current.Hash == ResultCubeHash {
+			isSolution = true
+		}
+	}
+	if isSolution {
+
+		for current.Parent != nil {
+			solution = fmt.Sprint(move_options[current.Move], " ", solution)
+			current = current.Parent
+		}
+		if solutionCache != "none" {
+			fmt.Println("\n(Found partial solution on cache)")
+			solution += solutionCache
+		}
+		return true, solution
+	}
+	return false, solution
 }
 
 func createNode(c *cube.Rubik, parent *ANode, move int) *ANode {
@@ -59,6 +85,7 @@ func createNode(c *cube.Rubik, parent *ANode, move int) *ANode {
 	node := &ANode{
 		Cube:   *c,
 		Parent: parent,
+		Move:   move,
 	}
 	cube.UpdateCubeLinks(&node.Cube)
 	// Apply movement and calculate hash
@@ -75,16 +102,16 @@ func createNode(c *cube.Rubik, parent *ANode, move int) *ANode {
 	return node
 }
 
-func handleNode(posMoves []string, gd *aStarData, current *ANode) {
+func expandNode(posMoves []string, gd *aStarData, current *ANode) {
 	for i := range posMoves {
 		// if move is in closedList continue
 		new := createNode(&current.Cube, current, i)
-		if tabInSlice(new, gd.closedList) != nil {
+		if isNodeInList(new, gd.closedList) != nil {
 			continue
 		}
 
 		// if move is in openList see if new node has better G
-		open_node := tabInSlice(new, gd.openList)
+		open_node := isNodeInList(new, gd.openList)
 		if open_node != nil && new.G >= open_node.G {
 			continue
 		}
@@ -95,7 +122,7 @@ func handleNode(posMoves []string, gd *aStarData, current *ANode) {
 	}
 }
 
-func tabInSlice(node *ANode, list []*ANode) *ANode {
+func isNodeInList(node *ANode, list []*ANode) *ANode {
 	for _, b := range list {
 		if node.Hash == b.Hash {
 			return b
