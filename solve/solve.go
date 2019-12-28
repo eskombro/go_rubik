@@ -1,42 +1,41 @@
 package solve
 
 import (
-	// "fmt"
+	"fmt"
 
 	bolt "go_rubik/boltdb"
 	"go_rubik/cube"
 )
 
+var ResultCube cube.Rubik
+var ResultCubeHash string
+
 func mixCube(c *cube.Rubik) {
+	fmt.Println("Shuffling Cube:")
 	RandomMove(c, true)
 	RandomMove(c, true)
 	RandomMove(c, true)
-	RandomMove(c, true)
-	RandomMove(c, true)
-	// RandomMove(c, true)
+	fmt.Println("-----------")
+	fmt.Println("Initial state:")
 	cube.PrintRubik(c)
+	fmt.Println("-----------")
 }
 
 func Solve(c *cube.Rubik) string {
 	mixCube(c)
-	solution := SolveRandomMethod(c)
+	ResultCube := cube.NewRubik()
+	ResultCubeHash = GetCubeStateHash(ResultCube)
+	solution := SolveAStar(c)
 	return solution
 }
 
-func SolveRandomMethod(c *cube.Rubik) string {
-	solution := "none"
+func CheckStateInCache(c *cube.Rubik) string {
 	hash := ""
 	if bolt.Bolt.Bucket == nil {
 		bolt.CreateDB()
 		bolt.Bolt.Bucket = &bolt.BboltBucket{Name: "list"}
 	}
-	for {
-		hash = GetCubeStateHash(c)
-		solution = bolt.Get(bolt.Bolt.Bucket, hash)
-		if solution != "none" {
-			break
-		}
-		RandomMove(c, false)
-	}
+	hash = GetCubeStateHash(c)
+	solution := bolt.Get(bolt.Bolt.Bucket, hash)
 	return solution
 }

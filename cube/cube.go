@@ -5,11 +5,15 @@ import (
 )
 
 func NewRubik() *Rubik {
-	fmt.Println("Creating a Rubik...")
 	cube := Rubik{}
 	for i := range cube.Faces {
 		cube.Faces[i] = NewFace(i)
 	}
+	UpdateCubeLinks(&cube)
+	return &cube
+}
+
+func UpdateCubeLinks(cube *Rubik) {
 	cube.Faces[U].Links = [4]*Face{
 		&cube.Faces[B],
 		&cube.Faces[F],
@@ -46,7 +50,6 @@ func NewRubik() *Rubik {
 		&cube.Faces[L],
 		&cube.Faces[R],
 	}
-	return &cube
 }
 
 func NewFace(color int) Face {

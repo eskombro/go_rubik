@@ -13,11 +13,6 @@ var move_options = []string{
 	"U2", "D2", "L2", "R2", "F2", "B2",
 }
 
-// var move_options = []string{
-// 	"U", "D", "L",
-// 	"U'", "D'", "L'",
-// }
-
 func RandomMove(c *cube.Rubik, verbose bool) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)

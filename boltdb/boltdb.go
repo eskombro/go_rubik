@@ -22,8 +22,6 @@ type BboltBucket struct {
 }
 
 // NORMAL USAGE:
-//
-
 // bolt.CreateDB()
 // bolt.Bolt.Bucket = &bolt.BboltBucket{Name: "list"}
 // bolt.CreateBucket(bolt.Bolt.Bucket)

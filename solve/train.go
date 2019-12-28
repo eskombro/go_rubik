@@ -3,7 +3,6 @@ package solve
 import (
 	"crypto/md5"
 	"fmt"
-	// "os"
 
 	bolt "go_rubik/boltdb"
 	"go_rubik/cube"
@@ -50,7 +49,6 @@ func runTraining(c *cube.Rubik, node *Node) {
 	if node.Children[0] == nil {
 		if counter%100 == 0 {
 			fmt.Println("Trained:", counter, "combinations tested.")
-			// 	os.Exit(0)
 		}
 
 		unapplyMove(c, node.Move)
@@ -69,7 +67,6 @@ func runTraining(c *cube.Rubik, node *Node) {
 }
 
 func applyMove(c *cube.Rubik, move int) {
-	// fmt.Println("Apply", move)
 	cube.RotateFace(c, move_options[move], false)
 }
 
@@ -89,9 +86,7 @@ func GetOppositeMove(move int) int {
 }
 
 func unapplyMove(c *cube.Rubik, move int) {
-
 	opposite := GetOppositeMove(move)
-	// fmt.Println("Unapply", move, "->", opposite)
 	cube.RotateFace(c, move_options[opposite], false)
 }
 
@@ -100,22 +95,17 @@ func GetCubeStateHash(c *cube.Rubik) string {
 	for _, face := range c.Faces {
 		cubeStr += fmt.Sprint(face.Blocks)
 	}
-	// fmt.Println("Cube:", cubeStr)
 	data := []byte(cubeStr)
 	return fmt.Sprintf("%x", md5.Sum(data))
 }
 
 func addStateToDB(c *cube.Rubik, node *Node) {
-	// Hash state
 	hash := GetCubeStateHash(c)
-	// Solution to str
 	solution := ""
 	for node.Parent != nil {
 		solution += move_options[GetOppositeMove(node.Move)] + " "
 		node = node.Parent
 	}
-	// Add to DB [todo: Only add if shorter]
-	// fmt.Println("====================", hash, solution)
 	prev := bolt.Get(bolt.Bolt.Bucket, hash)
 	if prev == "none" || len(prev) > len(solution) {
 		bolt.Put(bolt.Bolt.Bucket, hash, solution)
