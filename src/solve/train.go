@@ -22,11 +22,13 @@ func Train() {
 	bolt.Bolt.Bucket = &bolt.BboltBucket{Name: "list"}
 	bolt.CreateBucket(bolt.Bolt.Bucket)
 
+	fmt.Println("Known states:", bolt.CountBucket(bolt.Bolt.Bucket))
+
 	tree := Node{}
 	buildTree(&tree, 1)
 	c := cube.NewRubik()
 	runTraining(c, &tree)
-	fmt.Println("\nCounter:", counter)
+	fmt.Println("\nCombinations counter:", counter)
 }
 
 func buildTree(node *Node, depth int) {

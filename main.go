@@ -10,7 +10,7 @@ import (
 func main() {
 	// Parameters
 	useCache := true
-	randomIterations := 8
+	randomIterations := 11
 	trainingSession := false
 
 	fmt.Println("  .----------------------.")

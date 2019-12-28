@@ -18,26 +18,25 @@ type ANode struct {
 
 type aStarData struct {
 	openList   []*ANode
-	closedList []*ANode
+	closedList map[string]bool
+	openLimit  int
 }
 
-func SolveAStar(c *cube.Rubik, usesCache bool) string {
+func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) string {
 	fmt.Println("Launching A*")
-	gd := aStarData{[]*ANode{}, []*ANode{}}
+	gd := aStarData{[]*ANode{}, make(map[string]bool), openLimit}
 	n := createNode(c, nil, -1)
 	gd.openList = append(gd.openList, n)
-	rounds := 0
 
 	for {
 		if len(gd.openList) > 0 {
-			rounds++
-			fmt.Printf("\rRounds: %d", rounds)
 			current := gd.openList[0]
+			fmt.Printf("\rClosed list: %d | Open list: %d | f: %d     ",
+				len(gd.closedList), len(gd.openList), current.F)
 			gd.openList = removeFromList(current, gd.openList)
-			gd.closedList = append(gd.closedList, current)
+			gd.closedList[current.Hash] = true
 			isSolution, solution := checkIsSolution(current, usesCache)
 			if isSolution {
-				fmt.Println("Nodes checked:", rounds)
 				return solution
 			}
 			expandNode(move_options, &gd, current)
@@ -106,7 +105,8 @@ func expandNode(posMoves []string, gd *aStarData, current *ANode) {
 	for i := range posMoves {
 		// if move is in closedList continue
 		new := createNode(&current.Cube, current, i)
-		if isNodeInList(new, gd.closedList) != nil {
+
+		if gd.closedList[new.Hash] {
 			continue
 		}
 
@@ -119,6 +119,11 @@ func expandNode(posMoves []string, gd *aStarData, current *ANode) {
 		// Add new node to open list TODO
 		// fmt.Println("Node is being added to open list")
 		gd.openList = addToList(new, gd.openList)
+	}
+	if gd.openLimit != 0 {
+		if len(gd.openList) > gd.openLimit {
+			gd.openList = gd.openList[:gd.openLimit]
+		}
 	}
 }
 

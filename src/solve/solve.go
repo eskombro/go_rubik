@@ -14,7 +14,8 @@ var ResultCubeHash string
 func Solve(c *cube.Rubik, useCache bool) string {
 	ResultCube := cube.NewRubik()
 	ResultCubeHash = GetCubeStateHash(ResultCube)
-	solution := SolveAStar(c, useCache)
+	openLimit := 2000
+	solution := SolveAStar(c, openLimit, useCache)
 	return solution
 }
 

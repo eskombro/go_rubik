@@ -131,6 +131,21 @@ func PrintBucket(bucket *BboltBucket) {
 	handleError(err)
 }
 
+func CountBucket(bucket *BboltBucket) int {
+	ct := 0
+	err := Bolt.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucket.Name))
+		err := b.ForEach(func(k, v []byte) error {
+			ct++
+			return nil
+		})
+		handleError(err)
+		return nil
+	})
+	handleError(err)
+	return ct
+}
+
 func Flush(bucket *BboltBucket) {
 	err := Bolt.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucket.Name))
