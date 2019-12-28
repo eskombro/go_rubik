@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"go_rubik/cube"
-	"go_rubik/solve"
+	"go_rubik/src/cube"
+	"go_rubik/src/solve"
 )
 
 func main() {
