@@ -29,26 +29,26 @@ func RandomMove(c *cube.Rubik, verbose bool) {
 	cube.RotateFace(c, move, verbose)
 }
 
-func applyMove(c *cube.Rubik, move int) {
+func applyMove(c *cube.Rubik, move byte) {
 	cube.RotateFace(c, move_options[move], false)
 }
 
-func GetOppositeMove(move int) int {
+func GetOppositeMove(move byte) int {
 	opposite := 0
 	optionsCountQuarter := (len(move_options) * 2) / 3
-	if move < optionsCountQuarter {
-		if move < optionsCountQuarter/2 {
-			opposite = move + optionsCountQuarter/2
+	if int(move) < optionsCountQuarter {
+		if int(move) < optionsCountQuarter/2 {
+			opposite = int(move) + optionsCountQuarter/2
 		} else {
-			opposite = move - optionsCountQuarter/2
+			opposite = int(move) - optionsCountQuarter/2
 		}
 	} else {
-		opposite = move
+		opposite = int(move)
 	}
 	return opposite
 }
 
-func unapplyMove(c *cube.Rubik, move int) {
+func unapplyMove(c *cube.Rubik, move byte) {
 	opposite := GetOppositeMove(move)
 	cube.RotateFace(c, move_options[opposite], false)
 }

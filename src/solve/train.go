@@ -2,6 +2,7 @@ package solve
 
 import (
 	"fmt"
+	"time"
 
 	bolt "go_rubik/src/boltdb"
 	"go_rubik/src/cube"
@@ -9,12 +10,12 @@ import (
 
 type Node struct {
 	Parent   *Node
-	Move     int
+	Move     byte
 	Depth    int
-	Children [18]*Node
+	Children *[18]*Node
 }
 
-var maxDepth = 6
+var maxDepth = 7
 var counter = 0
 
 func Train() {
@@ -23,11 +24,14 @@ func Train() {
 	bolt.CreateBucket(bolt.Bolt.Bucket)
 
 	fmt.Println("Known states:", bolt.CountBucket(bolt.Bolt.Bucket))
+	startTime := time.Now()
 
 	tree := Node{}
+	tree.Children = &[18]*Node{}
 	buildTree(&tree, 1)
 	c := cube.NewRubik()
 	runTraining(c, &tree)
+	fmt.Println("Training finished in ", time.Since(startTime))
 	fmt.Println("\nCombinations counter:", counter)
 }
 
@@ -35,8 +39,9 @@ func buildTree(node *Node, depth int) {
 	if depth == maxDepth {
 		return
 	}
+	node.Children = &[18]*Node{}
 	for move := range move_options {
-		node.Children[move] = &Node{Depth: depth, Move: move, Parent: node}
+		node.Children[move] = &Node{Depth: depth, Move: byte(move), Parent: node}
 	}
 	for _, child := range node.Children {
 		buildTree(child, depth+1)
@@ -46,7 +51,7 @@ func buildTree(node *Node, depth int) {
 func runTraining(c *cube.Rubik, node *Node) {
 	addStateToCacheDB(c, node)
 	counter++
-	if node.Children[0] == nil {
+	if node.Children == nil {
 		if counter%100 == 0 {
 			fmt.Print("\rTraining: ", counter, " combinations tested.")
 		}
@@ -61,7 +66,7 @@ func runTraining(c *cube.Rubik, node *Node) {
 		}
 	}
 	unapplyMove(c, node.Move)
-	if node.Move == len(move_options)-1 {
-		node.Parent.Children = [18]*Node{}
+	if int(node.Move) == len(move_options)-1 {
+		node.Parent.Children = nil
 	}
 }

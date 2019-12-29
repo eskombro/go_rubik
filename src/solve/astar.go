@@ -140,10 +140,12 @@ func addToList(new *ANode, list []*ANode) []*ANode {
 	list = append(list, new)
 	for i, n := range list {
 		if new.F <= n.F {
-			// COULD BE ORDERED BY LOWEST G AS SECND CRITERIA
-			copy(list[i+1:], list[i:])
-			list[i] = new
-			break
+			if new.G <= n.G {
+				// COULD BE ORDERED BY LOWEST G AS SECND CRITERIA
+				copy(list[i+1:], list[i:])
+				list[i] = new
+				break
+			}
 		}
 	}
 	return (list)
