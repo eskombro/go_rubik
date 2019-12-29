@@ -28,24 +28,24 @@ func GetCubeStateHash(c *cube.Rubik) string {
 	return fmt.Sprintf("%x", md5.Sum(data))
 }
 
-func CheckStateInCacheDB(hash string) string {
-	if bolt.Bolt.Bucket == nil {
-		bolt.CreateDB()
-		bolt.Bolt.Bucket = &bolt.BboltBucket{Name: "list"}
+func CheckStateInCacheDB(dbName string, bucketName string, hash string) string {
+	if bolt.Bolt[dbName] == nil || bolt.Bolt[dbName].Bucket[bucketName] == nil {
+		bolt.CreateDB(dbName)
+		bolt.CreateBucket(dbName, "list")
 	}
-	solution := bolt.Get(bolt.Bolt.Bucket, hash)
+	solution := bolt.Get(dbName, bucketName, hash)
 	return solution
 }
 
-func addStateToCacheDB(c *cube.Rubik, node *Node) {
+func addStateToCacheDB(dbName string, bucketName string, c *cube.Rubik, node *Node) {
 	hash := GetCubeStateHash(c)
 	solution := ""
 	for node.Parent != nil {
 		solution += move_options[GetOppositeMove(node.Move)] + " "
 		node = node.Parent
 	}
-	prev := bolt.Get(bolt.Bolt.Bucket, hash)
+	prev := bolt.Get(dbName, bucketName, hash)
 	if prev == "none" || len(prev) > len(solution) {
-		bolt.Put(bolt.Bolt.Bucket, hash, solution)
+		bolt.Put(dbName, bucketName, hash, solution)
 	}
 }

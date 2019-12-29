@@ -19,11 +19,10 @@ var maxDepth = 7
 var counter = 0
 
 func Train() {
-	bolt.CreateDB()
-	bolt.Bolt.Bucket = &bolt.BboltBucket{Name: "list"}
-	bolt.CreateBucket(bolt.Bolt.Bucket)
+	bolt.CreateDB("cache/Cache.bolt")
+	bolt.CreateBucket("cache/Cache.bolt", "list")
 
-	fmt.Println("Known states:", bolt.CountBucket(bolt.Bolt.Bucket))
+	fmt.Println("Known states:", bolt.CountBucket("cache/Cache.bolt", "list"))
 	startTime := time.Now()
 
 	tree := Node{}
@@ -49,7 +48,7 @@ func buildTree(node *Node, depth int) {
 }
 
 func runTraining(c *cube.Rubik, node *Node) {
-	addStateToCacheDB(c, node)
+	addStateToCacheDB("cache/Cache.bolt", "list", c, node)
 	counter++
 	if node.Children == nil {
 		if counter%100 == 0 {

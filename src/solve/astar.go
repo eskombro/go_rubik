@@ -52,7 +52,7 @@ func checkIsSolution(current *ANode, usesCache bool) (bool, string) {
 	solution := ""
 	isSolution := false
 	if usesCache {
-		solutionCache = CheckStateInCacheDB(current.Hash)
+		solutionCache = CheckStateInCacheDB("cache/Cache.bolt", "list", current.Hash)
 		if solutionCache != "none" {
 			isSolution = true
 		} else if current.Hash == ResultCubeHash {

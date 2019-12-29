@@ -11,13 +11,16 @@ func main() {
 	// Parameters
 	useCache := true
 	randomIterations := 8
-	trainingSession := false
+	trainingSession := true
+	createCornersSession := false
 
 	fmt.Println("  .----------------------.")
 	fmt.Println("  |      Rubik's Go!     |")
 	fmt.Println("  '----------------------'")
 	c := cube.NewRubik()
-	if trainingSession {
+	if createCornersSession {
+
+	} else if trainingSession {
 		solve.Train()
 	} else {
 		solve.MixCubeRandom(c, randomIterations)

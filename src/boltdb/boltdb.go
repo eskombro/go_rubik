@@ -8,11 +8,28 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-var Bolt BoltDB
+/*
+NORMAL USAGE OF WRAPPER (Example):
+
+bolt.CreateDB("dbName")
+bolt.CreateBucket("dbName", "bucketName")
+bolt.Put("dbName", "bucketName", "SomeKey", "SomeValue")
+bolt.View("dbName", "bucketName", "SomeKey")
+bolt.Put("dbName", "bucketName", "SomeKey2", "SomeValue2")
+bolt.Put("dbName", "bucketName", "SomeKey3", "SomeValue3")
+bolt.PrintBucket("dbName", "bucketName")
+bolt.Delete("dbName", "bucketName", "SomeKey2")
+bolt.PrintBucket("dbName", "bucketName")
+bolt.Flush("dbName", "bucketName")
+bolt.PrintBucket("dbName", "bucketName")
+bolt.CloseDB("dbName")
+*/
+
+var Bolt map[string]*BoltDB
 
 type BoltDB struct {
 	DB     *bolt.DB
-	Bucket *BboltBucket
+	Bucket map[string]*BboltBucket
 }
 
 type BboltBucket struct {
@@ -21,51 +38,51 @@ type BboltBucket struct {
 	LastFlush time.Time
 }
 
-// NORMAL USAGE:
-// bolt.CreateDB()
-// bolt.Bolt.Bucket = &bolt.BboltBucket{Name: "list"}
-// bolt.CreateBucket(bolt.Bolt.Bucket)
-// fmt.Println(bolt.Bolt.Bucket)
-// bolt.Put(bolt.Bolt.Bucket, "SomeKey", "SomeValue")
-// bolt.View(bolt.Bolt.Bucket, "SomeKey")
-// bolt.Put(bolt.Bolt.Bucket, "SomeKey2", "SomeValue2")
-// bolt.Put(bolt.Bolt.Bucket, "SomeKey3", "SomeValue3")
-// bolt.PrintBucket(bolt.Bolt.Bucket)
-// bolt.Delete(bolt.Bolt.Bucket, "SomeKey2")
-// bolt.PrintBucket(bolt.Bolt.Bucket)
-// bolt.Flush(bolt.Bolt.Bucket)
-// bolt.PrintBucket(bolt.Bolt.Bucket)
-// bolt.CloseDB()
-
 func handleError(err error) {
 	if err != nil {
 		log.Print(err)
 	}
 }
 
-func CreateDB() {
+func CreateDB(dbName string) *BoltDB {
+
 	var err error
 	opt := &bolt.Options{
 		Timeout: 1 * time.Second,
 	}
-	Bolt.DB, err = bolt.Open("cache/Cache.bolt", 0600, opt)
+
+	if Bolt == nil {
+		Bolt = make(map[string]*BoltDB, 10)
+	}
+	db := BoltDB{}
+	db.DB, err = bolt.Open(dbName, 0600, opt)
 	handleError(err)
+	if db.DB != nil {
+		Bolt[dbName] = &db
+	}
+	return &db
 }
 
-func CreateBucket(bucket *BboltBucket) {
-	err := Bolt.DB.Update(func(tx *bolt.Tx) error {
+func CreateBucket(dbName string, bucketName string) {
+	db := Bolt[dbName]
+	if db.Bucket == nil {
+		db.Bucket = make(map[string]*BboltBucket, 10)
+	}
+	err := db.DB.Update(func(tx *bolt.Tx) error {
 		var err error
-		bucket.Bucket, err = tx.CreateBucketIfNotExists([]byte(bucket.Name))
-		bucket.LastFlush = time.Now()
+		db.Bucket[bucketName] = &BboltBucket{Name: bucketName}
+		db.Bucket[bucketName].Bucket, err = tx.CreateBucketIfNotExists([]byte(bucketName))
+		db.Bucket[bucketName].LastFlush = time.Now()
 		handleError(err)
 		return nil
 	})
 	handleError(err)
 }
 
-func Put(bucket *BboltBucket, key string, value string) {
-	err := Bolt.DB.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(bucket.Name))
+func Put(dbName string, bucketName string, key string, value string) {
+	db := Bolt[dbName]
+	err := db.DB.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(bucketName))
 		handleError(err)
 		err = b.Put([]byte(key), []byte(value))
 		handleError(err)
@@ -74,11 +91,12 @@ func Put(bucket *BboltBucket, key string, value string) {
 	handleError(err)
 }
 
-func View(bucket *BboltBucket, key string) {
-	err := Bolt.DB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket.Name))
+func View(dbName string, bucketName string, key string) {
+	db := Bolt[dbName]
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
 		if b == nil {
-			return fmt.Errorf("Bucket %q not found!", bucket.Name)
+			return fmt.Errorf("Bucket %q not found!", bucketName)
 		}
 		val := b.Get([]byte(key))
 		fmt.Println(string(val))
@@ -87,12 +105,13 @@ func View(bucket *BboltBucket, key string) {
 	handleError(err)
 }
 
-func Get(bucket *BboltBucket, key string) string {
+func Get(dbName string, bucketName string, key string) string {
 	str := "none"
-	err := Bolt.DB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket.Name))
+	db := Bolt[dbName]
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
 		if b == nil {
-			return fmt.Errorf("Bucket %q not found!", bucket.Name)
+			return fmt.Errorf("Bucket %q not found!", bucketName)
 		}
 		val := b.Get([]byte(key))
 		if val != nil {
@@ -104,11 +123,12 @@ func Get(bucket *BboltBucket, key string) string {
 	return str
 }
 
-func Delete(bucket *BboltBucket, key string) {
-	err := Bolt.DB.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket.Name))
+func Delete(dbName string, bucketName string, key string) {
+	db := Bolt[dbName]
+	err := db.DB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
 		if b == nil {
-			return fmt.Errorf("Bucket %q not found!", bucket.Name)
+			return fmt.Errorf("Bucket %q not found!", bucketName)
 		}
 		err := b.Delete([]byte(key))
 		handleError(err)
@@ -117,10 +137,11 @@ func Delete(bucket *BboltBucket, key string) {
 	handleError(err)
 }
 
-func PrintBucket(bucket *BboltBucket) {
-	fmt.Println("Cacche bucket content:")
-	err := Bolt.DB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket.Name))
+func PrintBucket(dbName string, bucketName string) {
+	db := Bolt[dbName]
+	fmt.Println("Cache bucket content:")
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
 		err := b.ForEach(func(k, v []byte) error {
 			fmt.Printf("key=%s, value=%s\n", k, v)
 			return nil
@@ -131,10 +152,11 @@ func PrintBucket(bucket *BboltBucket) {
 	handleError(err)
 }
 
-func CountBucket(bucket *BboltBucket) int {
+func CountBucket(dbName string, bucketName string) int {
 	ct := 0
-	err := Bolt.DB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket.Name))
+	db := Bolt[dbName]
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
 		err := b.ForEach(func(k, v []byte) error {
 			ct++
 			return nil
@@ -146,9 +168,10 @@ func CountBucket(bucket *BboltBucket) int {
 	return ct
 }
 
-func Flush(bucket *BboltBucket) {
-	err := Bolt.DB.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket.Name))
+func Flush(dbName string, bucketName string) {
+	db := Bolt[dbName]
+	err := db.DB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
 		err := b.ForEach(func(k, v []byte) error {
 			b.Delete(k)
 			return nil
@@ -159,6 +182,7 @@ func Flush(bucket *BboltBucket) {
 	handleError(err)
 }
 
-func CloseDB() {
-	Bolt.DB.Close()
+func CloseDB(dbName string) {
+	db := Bolt[dbName]
+	db.DB.Close()
 }
