@@ -91,6 +91,20 @@ func Put(dbName string, bucketName string, key string, value string) {
 	handleError(err)
 }
 
+func PutMap(dbName string, bucketName string, insertMap map[string]byte) {
+	db := Bolt[dbName]
+	err := db.DB.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(bucketName))
+		handleError(err)
+		for k, v := range insertMap {
+			err = b.Put([]byte(k), []byte{v})
+		}
+		handleError(err)
+		return nil
+	})
+	handleError(err)
+}
+
 func View(dbName string, bucketName string, key string) {
 	db := Bolt[dbName]
 	err := db.DB.View(func(tx *bolt.Tx) error {

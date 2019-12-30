@@ -10,8 +10,8 @@ import (
 func main() {
 	// Parameters
 	useCache := true
-	randomIterations := 8
-	trainingSession := true
+	randomIterations := 11
+	trainingSession := false
 	createCornersSession := false
 
 	fmt.Println("  .----------------------.")
@@ -19,7 +19,7 @@ func main() {
 	fmt.Println("  '----------------------'")
 	c := cube.NewRubik()
 	if createCornersSession {
-
+		solve.CreateCornersTable()
 	} else if trainingSession {
 		solve.Train()
 	} else {

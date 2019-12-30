@@ -9,7 +9,7 @@ import (
 
 type ANode struct {
 	Parent   *ANode
-	F, G, H  int
+	F, G, H  float64
 	Move     int
 	Cube     cube.Rubik
 	Hash     string
@@ -24,6 +24,10 @@ type aStarData struct {
 
 func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) string {
 	fmt.Println("Launching A*")
+	fmt.Println("Loading data")
+	loadSavedData()
+	fmt.Println("Data loaded")
+	fmt.Println("Known corner states:", len(statesMap))
 	gd := aStarData{[]*ANode{}, make(map[string]bool), openLimit}
 	n := createNode(c, nil, -1)
 	gd.openList = append(gd.openList, n)
@@ -31,7 +35,7 @@ func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) string {
 	for {
 		if len(gd.openList) > 0 {
 			current := gd.openList[0]
-			fmt.Printf("\rClosed list: %d | Open list: %d | f: %d     ",
+			fmt.Printf("\rClosed list: %d | Open list: %d | f: %f     ",
 				len(gd.closedList), len(gd.openList), current.F)
 			gd.openList = removeFromList(current, gd.openList)
 			gd.closedList[current.Hash] = true
