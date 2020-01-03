@@ -1,16 +1,25 @@
 package solve
 
 import (
+	// "fmt"
 	"go_rubik/src/cube"
+	"sort"
 )
 
 func CalculateHeuristic(c *cube.Rubik) float64 {
 	hash := stateToHash(calculateCornersState(c))
-	if statesMap[hash] == 0 {
-		return misplacedTiles(c)
-	} else {
-		return float64(statesMap[hash]) / 8
+	for i := range cornerTabs {
+		if len(cornerTabs[i]) > 1 {
+			res := sort.SearchStrings(cornerTabs[i], hash)
+			if res < len(cornerTabs[i]) {
+				if cornerTabs[i][res] == hash {
+					// fmt.Println("FOUND CORNERS")
+					return float64(i+1) / 4
+				}
+			}
+		}
 	}
+	return 500000
 }
 
 func misplacedTiles(c *cube.Rubik) float64 {
@@ -22,5 +31,5 @@ func misplacedTiles(c *cube.Rubik) float64 {
 			}
 		}
 	}
-	return counter / 8
+	return counter / 4
 }

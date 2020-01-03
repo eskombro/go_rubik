@@ -10,25 +10,31 @@ import (
 func main() {
 	// Parameters
 	useCache := true
-	randomIterations := 11
+	randomIterations := 9
 	trainingSession := false
 	createCornersSession := false
 
 	fmt.Println("  .----------------------.")
 	fmt.Println("  |      Rubik's Go!     |")
 	fmt.Println("  '----------------------'")
-	c := cube.NewRubik()
+
 	if createCornersSession {
 		solve.CreateCornersTable()
 	} else if trainingSession {
 		solve.Train()
 	} else {
-		solve.MixCubeRandom(c, randomIterations)
-		fmt.Println("-----------")
-		fmt.Println("Initial state:")
-		cube.PrintRubik(c)
-		fmt.Println("-----------")
-		solution := solve.Solve(c, useCache)
-		fmt.Println("----\nSolution: ", solution)
+		for i := 0; i < 10; i++ {
+			fmt.Println("============")
+			fmt.Println("= NEW CUBE =")
+			c := cube.NewRubik()
+			solve.MixCubeRandom(c, randomIterations)
+			fmt.Println("------------")
+			fmt.Println("Initial state:")
+			cube.PrintRubik(c)
+			fmt.Println("------------")
+			solution := solve.Solve(c, useCache)
+			fmt.Println("----\nSolution: ", solution)
+			fmt.Println("============")
+		}
 	}
 }

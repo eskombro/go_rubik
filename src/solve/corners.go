@@ -3,7 +3,10 @@ package solve
 import (
 	"encoding/gob"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"sort"
+	"strings"
 	"time"
 
 	"go_rubik/src/cube"
@@ -41,12 +44,12 @@ func CreateCornersTable() {
 	}
 
 	currentMaxLayers = 0
-	for len(statesMap) < 30000000 {
+	for len(statesMap) < 88000000 {
 		currentMaxLayers++
 		fmt.Println("Launch search with depth:", currentMaxLayers)
 		expandNextLayer(&tree, byte(0))
-		saveToFile()
 		fmt.Println("\n\tSaved", len(statesMap), "states")
+		saveToFile()
 	}
 
 	fmt.Println("\nFinal len of map", len(statesMap))
@@ -54,19 +57,16 @@ func CreateCornersTable() {
 	fmt.Println("Training finished in ", time.Since(startTime))
 }
 
-func loadSavedData() {
-	fmt.Println()
-	decodeFile, err := os.Open("cache/corners.db")
-	if err != nil {
-		panic(err)
+func loadSavedData() [11][]string {
+	tabs := [11][]string{}
+	for i := range tabs {
+		dat, err := ioutil.ReadFile(fmt.Sprintf("cache/corners/corners_test_%d.db", i))
+		if err != nil {
+			panic(err)
+		}
+		tabs[i] = strings.Split(string(dat), "\n")
 	}
-	defer decodeFile.Close()
-	decoder := gob.NewDecoder(decodeFile)
-	statesMap = make(map[string]byte)
-	err = decoder.Decode(&statesMap)
-	if err != nil {
-		panic(err)
-	}
+	return tabs
 }
 
 func saveToFile() {
@@ -79,6 +79,29 @@ func saveToFile() {
 		panic(err)
 	}
 	encodeFile.Close()
+
+	maps := [11][]string{}
+	for k, v := range statesMap {
+		maps[v] = append(maps[v], k)
+	}
+	for i := range maps {
+		sort.Strings(maps[i])
+	}
+
+	for i, singleMap := range maps {
+		f, err := os.Create(fmt.Sprintf("cache/corners/corners_test_%d.db", i))
+		if err != nil {
+			panic(err)
+		}
+		for _, elem := range singleMap {
+			_, err = f.Write([]byte(fmt.Sprint(elem, "\n")))
+			if err != nil {
+				panic(err)
+			}
+		}
+		f.Close()
+	}
+
 }
 
 func expandNextLayer(node *CornerSearchNode, currentDepth byte) {
@@ -191,5 +214,12 @@ func stateToHash(cornerState *[8][3]byte) string {
 	for _, tile := range buff {
 		hash += fmt.Sprintf("%x", tile)
 	}
+
+	// hash := ""
+	// for _, corner := range cornerState {
+	// 	for _, tile := range corner {
+	// 		hash += fmt.Sprintf("%x", tile)
+	// 	}
+	// }
 	return hash
 }

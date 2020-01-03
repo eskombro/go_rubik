@@ -3,6 +3,7 @@ package solve
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"go_rubik/src/cube"
 )
@@ -22,10 +23,18 @@ type aStarData struct {
 	openLimit  int
 }
 
+var cornerTabs [11][]string
+
 func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) string {
 	fmt.Println("Launching A*")
 	fmt.Println("Loading data")
-	loadSavedData()
+	if len(cornerTabs[3]) == 0 {
+		cornerTabs = loadSavedData()
+		for i := range cornerTabs {
+			sort.Strings(cornerTabs[i])
+			fmt.Println(len(cornerTabs[i]))
+		}
+	}
 	fmt.Println("Data loaded")
 	fmt.Println("Known corner states:", len(statesMap))
 	gd := aStarData{[]*ANode{}, make(map[string]bool), openLimit}
@@ -33,6 +42,10 @@ func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) string {
 	gd.openList = append(gd.openList, n)
 
 	for {
+		if len(gd.closedList) >= 50000 {
+			fmt.Println("NO SOLUTION HERE")
+			os.Exit(1)
+		}
 		if len(gd.openList) > 0 {
 			current := gd.openList[0]
 			fmt.Printf("\rClosed list: %d | Open list: %d | f: %f     ",
@@ -126,7 +139,7 @@ func expandNode(posMoves []string, gd *aStarData, current *ANode) {
 	}
 	if gd.openLimit != 0 {
 		if len(gd.openList) > gd.openLimit {
-			gd.openList = gd.openList[:gd.openLimit]
+			gd.openList = gd.openList[:gd.openLimit-100]
 		}
 	}
 }
@@ -142,16 +155,22 @@ func isNodeInList(node *ANode, list []*ANode) *ANode {
 
 func addToList(new *ANode, list []*ANode) []*ANode {
 	list = append(list, new)
-	for i, n := range list {
-		if new.F <= n.F {
-			if new.G <= n.G {
-				// COULD BE ORDERED BY LOWEST G AS SECND CRITERIA
-				copy(list[i+1:], list[i:])
-				list[i] = new
-				break
-			}
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].F == list[j].F {
+			return list[i].G < list[j].G
 		}
-	}
+		return list[i].F < list[j].F
+	})
+	// for i, n := range list {
+	// 	if new.F < n.F {
+	// 		// if new.G <= n.G {
+	// 		// COULD BE ORDERED BY LOWEST G AS SECND CRITERIA
+	// 		copy(list[i+1:], list[i:])
+	// 		list[i] = new
+	// 		break
+	// 		// }
+	// 	}
+	// }
 	return (list)
 }
 
