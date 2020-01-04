@@ -11,12 +11,12 @@ import (
 var ResultCube cube.Rubik
 var ResultCubeHash string
 
-func Solve(c *cube.Rubik, useCache bool) string {
+func Solve(c *cube.Rubik, useCache bool) (string, bool) {
 	ResultCube := cube.NewRubik()
 	ResultCubeHash = GetCubeStateHash(ResultCube)
 	openLimit := 10000
-	solution := SolveAStar(c, openLimit, useCache)
-	return solution
+	solution, ok := SolveAStar(c, openLimit, useCache)
+	return solution, ok
 }
 
 func GetCubeStateHash(c *cube.Rubik) string {

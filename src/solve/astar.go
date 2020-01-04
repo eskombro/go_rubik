@@ -2,8 +2,10 @@ package solve
 
 import (
 	"fmt"
-	"os"
+	// "os"
 	"sort"
+	"sync"
+	"time"
 
 	"go_rubik/src/cube"
 )
@@ -19,13 +21,18 @@ type ANode struct {
 
 type aStarData struct {
 	openList   []*ANode
-	closedList map[string]bool
+	closedList *sync.Map
 	openLimit  int
+}
+
+type NodeAdder struct {
+	Node   *ANode
+	ToOpen bool
 }
 
 var cornerTabs [11][]string
 
-func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) string {
+func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) (string, bool) {
 	fmt.Println("Launching A*")
 	fmt.Println("Loading data")
 	if len(cornerTabs[3]) == 0 {
@@ -37,29 +44,51 @@ func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) string {
 	}
 	fmt.Println("Data loaded")
 	fmt.Println("Known corner states:", len(statesMap))
-	gd := aStarData{[]*ANode{}, make(map[string]bool), openLimit}
+	closed := sync.Map{}
+	closedSize := 0
+	gd := aStarData{[]*ANode{}, &closed, openLimit}
 	n := createNode(c, nil, -1)
+	ch := make(chan *NodeAdder)
 	gd.openList = append(gd.openList, n)
 
+	go openListHandler(ch, &gd, &closedSize)
+
 	for {
-		if len(gd.closedList) >= 50000 {
-			fmt.Println("NO SOLUTION HERE")
-			os.Exit(1)
-		}
+		// if closedSize >= 2000000 {
+		// return "\033[91mNO SOLUTION HERE\033[0m", false
+		// os.Exit(1)
+		// }
 		if len(gd.openList) > 0 {
 			current := gd.openList[0]
 			fmt.Printf("\rClosed list: %d | Open list: %d | f: %f     ",
-				len(gd.closedList), len(gd.openList), current.F)
+				closedSize, len(gd.openList), current.F)
 			gd.openList = removeFromList(current, gd.openList)
-			gd.closedList[current.Hash] = true
+			ch <- &NodeAdder{Node: current, ToOpen: false}
 			isSolution, solution := checkIsSolution(current, usesCache)
 			if isSolution {
-				return solution
+				return solution, true
 			}
-			expandNode(move_options, &gd, current)
+			go expandNode(ch, move_options, &gd, current)
 		} else {
-			fmt.Println("Open list is empty (shouldn't happen)")
-			os.Exit(1)
+			time.Sleep(time.Millisecond * 1)
+			// fmt.Println("Open list is empty (shouldn't happen)")
+			// os.Exit(1)
+		}
+	}
+}
+
+func openListHandler(ch <-chan *NodeAdder, gd *aStarData, closedSize *int) {
+	for new := range ch {
+		if new.ToOpen {
+			if gd.openLimit != 0 {
+				gd.openList = addToList(new.Node, gd.openList)
+				if len(gd.openList) > gd.openLimit {
+					gd.openList = gd.openList[:gd.openLimit-10]
+				}
+			}
+		} else {
+			*closedSize++
+			gd.closedList.Store(new.Node.Hash, true)
 		}
 	}
 }
@@ -118,12 +147,12 @@ func createNode(c *cube.Rubik, parent *ANode, move int) *ANode {
 	return node
 }
 
-func expandNode(posMoves []string, gd *aStarData, current *ANode) {
+func expandNode(ch chan<- *NodeAdder, posMoves []string, gd *aStarData, current *ANode) {
 	for i := range posMoves {
 		// if move is in closedList continue
 		new := createNode(&current.Cube, current, i)
 
-		if gd.closedList[new.Hash] {
+		if _, ok := gd.closedList.Load(new.Hash); ok {
 			continue
 		}
 
@@ -133,14 +162,8 @@ func expandNode(posMoves []string, gd *aStarData, current *ANode) {
 			continue
 		}
 
-		// Add new node to open list TODO
-		// fmt.Println("Node is being added to open list")
-		gd.openList = addToList(new, gd.openList)
-	}
-	if gd.openLimit != 0 {
-		if len(gd.openList) > gd.openLimit {
-			gd.openList = gd.openList[:gd.openLimit-100]
-		}
+		// Add new node to open list
+		ch <- &NodeAdder{Node: new, ToOpen: true}
 	}
 }
 
@@ -155,22 +178,15 @@ func isNodeInList(node *ANode, list []*ANode) *ANode {
 
 func addToList(new *ANode, list []*ANode) []*ANode {
 	list = append(list, new)
-	sort.Slice(list, func(i, j int) bool {
-		if list[i].F == list[j].F {
-			return list[i].G < list[j].G
+	for i, n := range list {
+		if new.F < n.F {
+			if new.H <= n.H {
+				copy(list[i+1:], list[i:])
+				list[i] = new
+				break
+			}
 		}
-		return list[i].F < list[j].F
-	})
-	// for i, n := range list {
-	// 	if new.F < n.F {
-	// 		// if new.G <= n.G {
-	// 		// COULD BE ORDERED BY LOWEST G AS SECND CRITERIA
-	// 		copy(list[i+1:], list[i:])
-	// 		list[i] = new
-	// 		break
-	// 		// }
-	// 	}
-	// }
+	}
 	return (list)
 }
 

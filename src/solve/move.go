@@ -16,17 +16,22 @@ var move_options = []string{
 
 func MixCubeRandom(c *cube.Rubik, iterations int) {
 	fmt.Println("Shuffling Cube:")
+	fmt.Print("   ----------->    ")
 	for iterations != 0 {
-		RandomMove(c, true)
+		r := RandomMove(c, false)
+		fmt.Printf("%s ", move_options[r])
 		iterations--
 	}
+	fmt.Println()
 }
 
-func RandomMove(c *cube.Rubik, verbose bool) {
+func RandomMove(c *cube.Rubik, verbose bool) int {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	move := move_options[r1.Intn(len(move_options))]
+	ran := r1.Intn(len(move_options))
+	move := move_options[ran]
 	cube.RotateFace(c, move, verbose)
+	return ran
 }
 
 func applyMove(c *cube.Rubik, move byte) {

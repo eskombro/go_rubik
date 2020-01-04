@@ -23,18 +23,25 @@ func main() {
 	} else if trainingSession {
 		solve.Train()
 	} else {
-		for i := 0; i < 10; i++ {
+		cubeNumber := 100
+		solvedNumber := 0
+		for i := 0; i < cubeNumber; i++ {
 			fmt.Println("============")
-			fmt.Println("= NEW CUBE =")
+			fmt.Printf("= NEW CUBE (%d/%d) =\n", i+1, cubeNumber)
 			c := cube.NewRubik()
 			solve.MixCubeRandom(c, randomIterations)
 			fmt.Println("------------")
 			fmt.Println("Initial state:")
 			cube.PrintRubik(c)
 			fmt.Println("------------")
-			solution := solve.Solve(c, useCache)
+			solution, ok := solve.Solve(c, useCache)
+			if ok {
+				solvedNumber++
+			}
 			fmt.Println("----\nSolution: ", solution)
 			fmt.Println("============")
 		}
+		fmt.Println()
+		fmt.Printf("===--- SOLVED %d/%d ---===\n", solvedNumber, cubeNumber)
 	}
 }
