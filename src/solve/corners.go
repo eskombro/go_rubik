@@ -57,7 +57,7 @@ func CreateCornersTable() {
 	fmt.Println("Training finished in ", time.Since(startTime))
 }
 
-func loadSavedData() [11][]string {
+func LoadCornersSavedData() [11][]string {
 	tabs := [11][]string{}
 	for i := range tabs {
 		dat, err := ioutil.ReadFile(fmt.Sprintf("cache/corners/corners_test_%d.db", i))

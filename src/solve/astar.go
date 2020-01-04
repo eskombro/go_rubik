@@ -3,7 +3,7 @@ package solve
 import (
 	"fmt"
 	// "os"
-	"sort"
+	// "sort"
 	"sync"
 	"time"
 
@@ -30,19 +30,10 @@ type NodeAdder struct {
 	ToOpen bool
 }
 
-var cornerTabs [11][]string
+var CornerTabs [11][]string
 
 func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) (string, bool) {
 	fmt.Println("Launching A*")
-	fmt.Println("Loading data")
-	if len(cornerTabs[3]) == 0 {
-		cornerTabs = loadSavedData()
-		for i := range cornerTabs {
-			sort.Strings(cornerTabs[i])
-			fmt.Println(len(cornerTabs[i]))
-		}
-	}
-	fmt.Println("Data loaded")
 	fmt.Println("Known corner states:", len(statesMap))
 	closed := sync.Map{}
 	closedSize := 0
@@ -54,10 +45,10 @@ func SolveAStar(c *cube.Rubik, openLimit int, usesCache bool) (string, bool) {
 	go openListHandler(ch, &gd, &closedSize)
 
 	for {
-		// if closedSize >= 2000000 {
-		// return "\033[91mNO SOLUTION HERE\033[0m", false
-		// os.Exit(1)
-		// }
+		if closedSize >= 80000 {
+			return "\033[91mNO SOLUTION HERE\033[0m", false
+			// os.Exit(1)
+		}
 		if len(gd.openList) > 0 {
 			current := gd.openList[0]
 			fmt.Printf("\rClosed list: %d | Open list: %d | f: %f     ",

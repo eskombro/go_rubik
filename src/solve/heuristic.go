@@ -8,18 +8,18 @@ import (
 
 func CalculateHeuristic(c *cube.Rubik) float64 {
 	hash := stateToHash(calculateCornersState(c))
-	for i := range cornerTabs {
-		if len(cornerTabs[i]) > 1 {
-			res := sort.SearchStrings(cornerTabs[i], hash)
-			if res < len(cornerTabs[i]) {
-				if cornerTabs[i][res] == hash {
+	for i := range CornerTabs {
+		if len(CornerTabs[i]) > 1 {
+			res := sort.SearchStrings(CornerTabs[i], hash)
+			if res < len(CornerTabs[i]) {
+				if CornerTabs[i][res] == hash {
 					// fmt.Println("FOUND CORNERS")
 					return float64(i+1) / 4
 				}
 			}
 		}
 	}
-	return 500000
+	return misplacedTiles(c)
 }
 
 func misplacedTiles(c *cube.Rubik) float64 {
